@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>APEX 2</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f5;
+    --bg3: #ebebeb;
+    --border: #d0d0d0;
+    --accent: #c87d10;
+    --purple: #5a4fb0;
+    --green: #2e9e56;
+    --red: #c03030;
+    --strip: #cccccc;
+    --strip-active: #5a4fb0;
+    --strip-fresh: #2e9e56;
+    --corner: #bbbbbb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; background: var(--bg); color: #000; min-height: 100vh; font-size: 16px; }
+  .container { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+  /* Header */
+  .header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid var(--border); }
+  .header-badge { background: var(--accent); color: #fff; font-size: 26px; font-weight: 900; padding: 8px 18px; border-radius: 6px; letter-spacing: 0.08em; }
+  .header-title { font-size: 15px; font-weight: 600; color: #000; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* Legend */
+  .legend { display: flex; gap: 16px; margin-bottom: 16px; padding: 10px 14px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #000; font-weight: 500; }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+  /* Table plan */
+  .table-section { margin-bottom: 20px; }
+  .dir-label { font-size: 13px; font-weight: 700; letter-spacing: 0.15em; color: #000; text-align: center; padding: 5px 0; text-transform: uppercase; }
+  .table-box { border: 2px solid #aaa; background: var(--bg2); padding: 10px 8px; display: flex; gap: 6px; justify-content: center; border-radius: 4px; overflow-x: auto; }
+
+  /* Seat */
+  .seat { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; }
+  .seat-num { font-size: 13px; font-weight: 700; color: #000; }
+
+  .seat-grid { width: 68px; height: 96px; position: relative; background: var(--bg3); border: 1px solid #aaa; }
+
+  .frame-center {
+    position: absolute; top: 18px; bottom: 18px; left: 13px; right: 13px;
+    background: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #aaa;
+    pointer-events: none; z-index: 1; border: 1px solid #ccc;
+  }
+
+  .strip-left, .strip-right {
+    position: absolute; top: 0; bottom: 0; width: 13px;
+    cursor: pointer; z-index: 3; background: var(--strip);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    transition: background 0.1s;
+  }
+  .strip-left  { left: 0; }
+  .strip-right { right: 0; }
+
+  .strip-top, .strip-bottom {
+    position: absolute; left: 13px; right: 13px; height: 18px;
+    cursor: pointer; z-index: 3; background: var(--strip);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    transition: background 0.1s;
+  }
+  .strip-top    { top: 0; }
+  .strip-bottom { bottom: 0; }
+
+  .strip-val {
+    font-size: 9px; font-weight: 900; color: #000;
+    pointer-events: none; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; padding: 0 1px; text-align: center;
+  }
+  .strip-left .strip-val, .strip-right .strip-val {
+    writing-mode: vertical-rl; white-space: nowrap; max-height: 100%; padding: 2px 0;
+  }
+
+  .corner { position: absolute; width: 13px; height: 18px; background: var(--corner); pointer-events: none; z-index: 2; }
+  .corner-tl { top: 0; left: 0; } .corner-tr { top: 0; right: 0; }
+  .corner-bl { bottom: 0; left: 0; } .corner-br { bottom: 0; right: 0; }
+
+  .strip-left:active, .strip-right:active,
+  .strip-top:active, .strip-bottom:active { background: #aaa; }
+  .strip-left.active, .strip-right.active,
+  .strip-top.active, .strip-bottom.active { background: var(--strip-active); }
+  .strip-left.fresh, .strip-right.fresh,
+  .strip-top.fresh, .strip-bottom.fresh { background: var(--strip-fresh) !important; }
+
+  /* Action panel */
+  .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .panel-label { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #555; }
+  .panel-tag { font-size: 16px; font-weight: 700; color: #000; background: #fff; border: 2px solid var(--accent); padding: 4px 12px; border-radius: 6px; }
+  .panel-empty { font-size: 16px; color: #888; font-style: italic; text-align: center; padding: 12px 0; }
+
+  .status { font-size: 15px; margin-top: 10px; min-height: 22px; font-weight: 500; padding: 8px 12px; border-radius: 6px; }
+  .status.ok  { color: var(--green); background: #edfaf3; }
+  .status.err { color: var(--red);   background: #fdeaea; }
+
+  /* Camera */
+  .cam-area { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; overflow: hidden; border-radius: 8px; border: 2px solid var(--border); }
+  video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .scan-overlay { position: absolute; inset: 0; pointer-events: none; }
+  .scan-frame { position: absolute; inset: 0; border: 3px solid var(--accent); overflow: hidden; }
+  .scan-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--accent); animation: scanline 1.2s ease-in-out infinite; }
+  @keyframes scanline { 0%,100%{top:5%} 50%{top:90%} }
+  .found-flash { position: absolute; inset: 0; background: rgba(46,158,86,0.3); opacity: 0; transition: opacity 0.1s; }
+  .fps-badge { position: absolute; top: 8px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; font-size: 12px; padding: 3px 8px; border-radius: 4px; font-family: monospace; }
+
+  /* Buttons — large touch targets */
+  .btn-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  button {
+    font-family: inherit; font-size: 16px; font-weight: 600;
+    padding: 14px 20px; border-radius: 8px;
+    border: 2px solid var(--border); background: #fff; color: #000;
+    cursor: pointer; transition: all 0.1s; min-height: 50px;
+    -webkit-appearance: none;
+  }
+  button:active { opacity: 0.75; }
+  button.primary { border-color: var(--purple); color: var(--purple); background: #f0eeff; }
+  button.primary:active { background: var(--purple); color: #fff; }
+  button.scan-big {
+    flex: 1; font-size: 18px; font-weight: 700;
+    background: var(--purple); color: #fff; border-color: var(--purple);
+    min-height: 56px;
+  }
+  button.danger { border-color: var(--red); color: var(--red); background: #fff5f5; }
+  button.danger:active { background: var(--red); color: #fff; }
+
+  /* Input */
+  .input-row { display: flex; gap: 10px; margin-top: 14px; }
+  input[type=text] {
+    flex: 1; font-family: inherit; font-size: 16px;
+    padding: 14px 14px; border-radius: 8px;
+    border: 2px solid var(--border); background: #fff; color: #000;
+    outline: none; -webkit-appearance: none;
+  }
+  input[type=text]:focus { border-color: var(--purple); }
+  input[type=text]::placeholder { color: #aaa; }
+
+  /* Records */
+  .record-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; max-height: 400px; overflow-y: auto; }
+  .record-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; background: #fff;
+    border-radius: 8px; border-left: 4px solid var(--purple);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .record-seat { font-size: 14px; font-weight: 700; color: #000; min-width: 60px; white-space: nowrap; text-transform: uppercase; }
+  .record-val { font-size: 15px; color: #000; flex: 1; word-break: break-all; font-weight: 500; }
+  .record-time { font-size: 12px; color: #888; white-space: nowrap; }
+  .record-del { font-size: 18px; color: var(--red); cursor: pointer; background: none; border: none; padding: 4px 8px; min-height: auto; min-width: 36px; border-radius: 4px; }
+  .record-del:active { background: var(--red); color: #fff; }
+
+  .sync-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .panel-label-lg { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #000; }
+  .sync-badge { font-size: 13px; font-weight: 600; text-transform: uppercase; }
+  .sync-badge.ok      { color: var(--green); }
+  .sync-badge.err     { color: var(--red); }
+  .sync-badge.loading { color: #aaa; }
+
+  /* Snapshot panel */
+  .snapshot-input-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .snapshot-input-row input[type=datetime-local] {
+    flex: 1; font-family: inherit; font-size: 15px;
+    padding: 12px 14px; border-radius: 8px;
+    border: 2px solid var(--border); background: #fff; color: #000;
+    outline: none; -webkit-appearance: none; min-width: 0;
+  }
+  .snapshot-input-row input[type=datetime-local]:focus { border-color: var(--purple); }
+  .snap-empty { font-size: 15px; color: #888; font-style: italic; text-align: center; padding: 12px 0; }
+  .snap-dir { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: #000; text-align: center; padding: 5px 0; text-transform: uppercase; }
+  .snap-table-box { border: 2px solid #aaa; background: var(--bg2); padding: 10px 8px; display: flex; gap: 6px; justify-content: center; border-radius: 4px; overflow-x: auto; margin-top: 4px; }
+  .snap-seat { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; }
+  .snap-seat-num { font-size: 13px; font-weight: 700; color: #000; }
+  .snap-grid { width: 68px; height: 96px; position: relative; background: var(--bg3); border: 1px solid #aaa; }
+  .snap-center { position: absolute; top: 18px; bottom: 18px; left: 13px; right: 13px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #aaa; border: 1px solid #ccc; pointer-events: none; z-index: 1; }
+  .snap-strip-left, .snap-strip-right { position: absolute; top: 0; bottom: 0; width: 13px; z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--strip); }
+  .snap-strip-left { left: 0; }
+  .snap-strip-right { right: 0; }
+  .snap-strip-top, .snap-strip-bottom { position: absolute; left: 13px; right: 13px; height: 18px; z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--strip); }
+  .snap-strip-top { top: 0; }
+  .snap-strip-bottom { bottom: 0; }
+  .snap-corner { position: absolute; width: 13px; height: 18px; background: var(--corner); pointer-events: none; z-index: 4; }
+  .snap-corner.tl { top: 0; left: 0; } .snap-corner.tr { top: 0; right: 0; }
+  .snap-corner.bl { bottom: 0; left: 0; } .snap-corner.br { bottom: 0; right: 0; }
+  .snap-strip-left.filled, .snap-strip-right.filled,
+  .snap-strip-top.filled, .snap-strip-bottom.filled { background: var(--green); }
+  .snap-val { font-size: 9px; font-weight: 900; color: #fff; pointer-events: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 1px; text-align: center; }
+  .snap-strip-left .snap-val, .snap-strip-right .snap-val { writing-mode: vertical-rl; white-space: nowrap; max-height: 100%; padding: 2px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-badge">APEX 2</div>
+    <div class="header-title">Système de scan QR</div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--strip)"></div>Non scanné</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--strip-active)"></div>Sélectionné</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--strip-fresh)"></div>Enregistré</div>
+  </div>
+
+  <div class="table-section">
+    <div class="dir-label">— NORD —</div>
+    <div class="table-box" id="table-box"></div>
+    <div class="dir-label">— SUD —</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-label">Position active</div>
+      <span class="panel-tag" id="active-tag" style="display:none"></span>
+    </div>
+    <p class="panel-empty" id="hint-text">Appuyez sur un côté du plan</p>
+    <div id="scan-section" style="display:none">
+      <div class="cam-area" id="cam-area" style="display:none">
+        <video id="video" playsinline autoplay muted></video>
+        <div class="scan-overlay">
+          <div class="scan-frame">
+            <div class="scan-line"></div>
+            <div class="found-flash" id="found-flash"></div>
+          </div>
+        </div>
+        <div class="fps-badge" id="fps-badge">— fps</div>
+      </div>
+      <div class="status" id="scan-status" style="display:none"></div>
+      <div class="btn-row">
+        <button class="scan-big" id="scan-btn" onclick="startScan()">▶ Scanner</button>
+      </div>
+      <div class="btn-row">
+        <button class="primary" onclick="toggleManual()">✎ Saisie manuelle</button>
+        <button class="danger" onclick="clearActive()">✕ Effacer</button>
+      </div>
+      <div class="input-row" id="manual-row" style="display:none">
+        <input type="text" id="manual-input" placeholder="Numéro de pièce…" inputmode="numeric"/>
+        <button class="primary" onclick="saveManual()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="sync-row">
+      <div class="panel-label-lg">Recherche</div>
+    </div>
+    <div class="snapshot-input-row">
+      <input type="datetime-local" id="snapshot-dt" />
+      <button class="primary" onclick="loadSnapshot()">Afficher</button>
+    </div>
+    <div id="snapshot-result"></div>
+  </div>
+
+  <div class="panel">
+    <div class="sync-row">
+      <div class="panel-label-lg">Historique</div>
+      <span class="sync-badge loading" id="sync-status">Chargement…</span>
+    </div>
+    <div class="record-list" id="record-list">
+      <p class="panel-empty">Aucun enregistrement</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://puydipjoykvwzpwnjedi.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_yZeJG14bj8esqS9D743ymA_1eYH64CG';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const COL_POSITION = 'position';
+const COL_VALUE    = 'no.pièce';
+const COL_SCANNED  = 'date';
+
+const SEAT_ORDER = [1,2,3,4,5];
+const FACES = ['top','right','bottom','left'];
+const FACE_CODE  = { top:'N', right:'E', bottom:'S', left:'O' };
+const FACE_TYPE  = { top:'EF', right:'RF', bottom:'EF', left:'RF' };
+const FACE_LABEL = { top:'NORD', right:'EST', bottom:'SUD', left:'OUEST' };
+
+function makePos(seat, face) { return seat + FACE_TYPE[face] + FACE_CODE[face]; }
+function parsePos(pos) {
+  const m = pos.match(/^(\d+)(EF|RF)(N|S|E|O)$/);
+  if (!m) return [null, null];
+  const faceMap = { N:'top', S:'bottom', E:'right', O:'left' };
+  return [m[1], faceMap[m[3]]];
+}
+
+let activeKey = null;
+let scanning = false, rafId = null, currentStream = null;
+let fpsFrames = 0, fpsLast = performance.now();
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+const dataStore = {};
+
+function buildTable() {
+  const box = document.getElementById('table-box');
+  box.innerHTML = '';
+  SEAT_ORDER.forEach(s => {
+    const seat = document.createElement('div');
+    seat.className = 'seat';
+    seat.innerHTML = `
+      <div class="seat-num">#${s}</div>
+      <div class="seat-grid" id="seat-grid-${s}">
+        <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+        <div class="frame-center">${s}</div>
+        <div class="strip-left"   id="strip-${s}-left"   onclick="selectFace(${s},'left')">  <span class="strip-val" id="val-${s}-left"></span></div>
+        <div class="strip-right"  id="strip-${s}-right"  onclick="selectFace(${s},'right')"> <span class="strip-val" id="val-${s}-right"></span></div>
+        <div class="strip-top"    id="strip-${s}-top"    onclick="selectFace(${s},'top')">   <span class="strip-val" id="val-${s}-top"></span></div>
+        <div class="strip-bottom" id="strip-${s}-bottom" onclick="selectFace(${s},'bottom')"><span class="strip-val" id="val-${s}-bottom"></span></div>
+      </div>`;
+    box.appendChild(seat);
+  });
+}
+
+function updateStripValue(seat, face, val) {
+  const el = document.getElementById(`val-${seat}-${face}`);
+  if (el) el.textContent = val ? val.slice(0, 6) : '';
+}
+
+function selectFace(seat, face) {
+  if (activeKey) {
+    const [ps, pf] = parsePos(activeKey);
+    document.getElementById(`strip-${ps}-${pf}`)?.classList.remove('active');
+  }
+  activeKey = makePos(seat, face);
+  document.getElementById(`strip-${seat}-${face}`)?.classList.add('active');
+  const label = `${makePos(seat, face)} · ${FACE_LABEL[face]}`;
+  document.getElementById('active-tag').textContent = label;
+  document.getElementById('active-tag').style.display = '';
+  document.getElementById('hint-text').style.display = 'none';
+  document.getElementById('scan-section').style.display = '';
+  const cur = dataStore[activeKey];
+  const statusEl = document.getElementById('scan-status');
+  if (cur) {
+    statusEl.textContent = '▪ Valeur actuelle : ' + cur.value;
+    statusEl.className = 'status ok';
+    statusEl.style.display = '';
+  } else {
+    statusEl.style.display = 'none';
+  }
+  stopScan();
+  document.getElementById('manual-row').style.display = 'none';
+}
+
+function flashGreen(seat, face) {
+  const strip = document.getElementById(`strip-${seat}-${face}`);
+  if (!strip) return;
+  strip.classList.add('fresh');
+  setTimeout(() => strip.classList.remove('fresh'), 3000);
+}
+
+function setStatus(text, type) {
+  const el = document.getElementById('scan-status');
+  el.textContent = text;
+  el.className = 'status' + (type ? ' ' + type : '');
+  el.style.display = text ? '' : 'none';
+}
+
+function setSyncStatus(text, type) {
+  const el = document.getElementById('sync-status');
+  el.textContent = text;
+  el.className = 'sync-badge ' + (type || 'loading');
+}
+
+async function loadRecords() {
+  setSyncStatus('Sync…', 'loading');
+  try {
+    const url = SUPABASE_URL + '/rest/v1/scans2?select=*&order=date.desc&limit=40';
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Accept': 'application/json'
+      }
+    });
+    if (!res.ok) { setSyncStatus('Erreur ' + res.status, 'err'); return; }
+    const data = await res.json();
+    setSyncStatus('Synchronisé ✓', 'ok');
+    Object.keys(dataStore).forEach(k => delete dataStore[k]);
+    (data || []).forEach(r => {
+      const key = r[COL_POSITION];
+      if (key && !dataStore[key]) dataStore[key] = { value: r[COL_VALUE], date: r[COL_SCANNED] };
+    });
+    SEAT_ORDER.forEach(s => {
+      FACES.forEach(f => {
+        const key = makePos(s, f);
+        updateStripValue(s, f, dataStore[key]?.value || '');
+      });
+    });
+    renderRecords(data || []);
+  } catch(e) {
+    setSyncStatus('Erreur : ' + e.message, 'err');
+  }
+}
+
+async function startScan() {
+  if (!activeKey || scanning) return;
+  document.getElementById('cam-area').style.display = '';
+  setStatus('Démarrage caméra…', '');
+  try {
+    currentStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    const video = document.getElementById('video');
+    video.srcObject = currentStream;
+    await video.play();
+    scanning = true;
+    document.getElementById('scan-btn').textContent = '■ Arrêter';
+    document.getElementById('scan-btn').onclick = stopScan;
+    setStatus('Pointez le QR code vers la caméra…', '');
+    fpsLast = performance.now(); fpsFrames = 0;
+    tick(video);
+  } catch(e) {
+    setStatus('Erreur caméra : ' + e.message, 'err');
+    document.getElementById('cam-area').style.display = 'none';
+  }
+}
+
+function tick(video) {
+  if (!scanning) return;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    const scale = Math.min(1, 640 / (video.videoWidth || 640));
+    const w = Math.round((video.videoWidth || 640) * scale);
+    const h = Math.round((video.videoHeight || 480) * scale);
+    if (canvas.width !== w) canvas.width = w;
+    if (canvas.height !== h) canvas.height = h;
+    ctx.drawImage(video, 0, 0, w, h);
+    const result = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'attemptBoth' });
+    if (result?.data) {
+      document.getElementById('found-flash').style.opacity = '1';
+      setTimeout(() => { document.getElementById('found-flash').style.opacity = '0'; }, 250);
+      stopScan();
+      saveValue(result.data);
+      return;
+    }
+    fpsFrames++;
+    const now = performance.now();
+    if (now - fpsLast >= 1000) {
+      document.getElementById('fps-badge').textContent = fpsFrames + ' fps';
+      fpsFrames = 0; fpsLast = now;
+    }
+  }
+  rafId = requestAnimationFrame(() => tick(video));
+}
+
+function stopScan() {
+  scanning = false;
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
+  const video = document.getElementById('video');
+  if (video) video.srcObject = null;
+  document.getElementById('cam-area').style.display = 'none';
+  document.getElementById('fps-badge').textContent = '— fps';
+  document.getElementById('scan-btn').textContent = '▶ Scanner';
+  document.getElementById('scan-btn').onclick = startScan;
+}
+
+function toggleManual() {
+  const row = document.getElementById('manual-row');
+  row.style.display = row.style.display === 'none' ? '' : 'none';
+  if (row.style.display !== 'none') document.getElementById('manual-input').focus();
+}
+
+function saveManual() {
+  const v = document.getElementById('manual-input').value.trim();
+  if (!v || !activeKey) return;
+  saveValue(v);
+  document.getElementById('manual-input').value = '';
+  document.getElementById('manual-row').style.display = 'none';
+}
+
+async function saveValue(val) {
+  const trimmed = val.trim();
+  if (!/^\d+$/.test(trimmed)) {
+    setStatus('❌ Résultat inconnu du scan.', 'err');
+    return;
+  }
+  const num = parseInt(trimmed, 10);
+  const isEF = activeKey.includes('EF');
+  const isRF = activeKey.includes('RF');
+  const isOdd = num % 2 !== 0;
+  if (isEF && !isOdd) {
+    setStatus('❌ Le code scanné est une face de laminage.', 'err');
+    return;
+  }
+  if (isRF && isOdd) {
+    setStatus('❌ Le code scanné est une petite face.', 'err');
+    return;
+  }
+  setStatus('Enregistrement en cours…', '');
+  const now = new Date();
+  const edtStr = now.toLocaleString('sv-SE', { timeZone: 'America/Toronto' });
+  const row = { [COL_POSITION]: activeKey, [COL_VALUE]: trimmed, [COL_SCANNED]: edtStr };
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/scans2', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(row)
+    });
+    if (!res.ok) { const e = await res.json(); setStatus('Erreur : ' + (e.message||res.status), 'err'); return; }
+    const data = await res.json();
+    const saved = Array.isArray(data) ? data[0] : data;
+    dataStore[activeKey] = { value: trimmed, date: saved ? saved[COL_SCANNED] : edtStr };
+    setStatus('✓ Enregistré : ' + trimmed, 'ok');
+    const [seat, face] = parsePos(activeKey);
+    flashGreen(seat, face);
+    updateStripValue(seat, face, trimmed);
+    loadRecords();
+  } catch(e) {
+    setStatus('Erreur : ' + e.message, 'err');
+  }
+}
+
+async function clearActive() {
+  if (!activeKey) return;
+  setStatus('Suppression…', '');
+  await fetch(SUPABASE_URL + '/rest/v1/scans2?position=eq.' + encodeURIComponent(activeKey), {
+    method: 'DELETE',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+  });
+  delete dataStore[activeKey];
+  const [seat, face] = parsePos(activeKey);
+  updateStripValue(seat, face, '');
+  setStatus('', '');
+  loadRecords();
+}
+
+async function deleteRecord(dateVal, key) {
+  await fetch(SUPABASE_URL + '/rest/v1/scans2?position=eq.' + encodeURIComponent(key) + '&date=eq.' + encodeURIComponent(dateVal), {
+    method: 'DELETE',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+  });
+  delete dataStore[key];
+  const [seat, face] = parsePos(key);
+  updateStripValue(seat, face, '');
+  loadRecords();
+}
+
+function renderRecords(records) {
+  const list = document.getElementById('record-list');
+  if (!records.length) { list.innerHTML = '<p class="panel-empty">Aucun enregistrement</p>'; return; }
+  list.innerHTML = records.map(r => {
+    const key = r[COL_POSITION] || '';
+    const val = r[COL_VALUE] || '';
+    const rawTime = r[COL_SCANNED] || '';
+    const time = rawTime ? rawTime.slice(0, 16) : '';
+    return `<div class="record-item">
+      <span class="record-seat">${key}</span>
+      <span class="record-val">${val}</span>
+      <span class="record-time">${time}</span>
+      <button class="record-del" onclick="deleteRecord('${rawTime}','${key}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+async function loadSnapshot() {
+  const dtInput = document.getElementById('snapshot-dt').value;
+  const resultDiv = document.getElementById('snapshot-result');
+  if (!dtInput) {
+    resultDiv.innerHTML = '<p class="snap-empty">Veuillez sélectionner une date et heure.</p>';
+    return;
+  }
+  const chosen = new Date(dtInput);
+  const chosenEdt = chosen.toLocaleString('sv-SE', { timeZone: 'America/Toronto' });
+  resultDiv.innerHTML = '<p class="snap-empty">Chargement…</p>';
+
+  // Use native fetch to avoid DataCloneError on mobile browsers
+  try {
+    const url = SUPABASE_URL + '/rest/v1/scans2?select=*&date=lte.' + encodeURIComponent(chosenEdt) + '&order=date.desc&limit=1000';
+    const res = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+    if (!res.ok) { resultDiv.innerHTML = '<p class="snap-empty">Erreur : ' + res.status + '</p>'; return; }
+    const data = await res.json();
+
+    // Build map: position -> latest value at that time
+    const snap = {};
+    (data || []).forEach(r => {
+      if (r[COL_POSITION] && !snap[r[COL_POSITION]]) {
+        snap[r[COL_POSITION]] = r[COL_VALUE];
+      }
+    });
+
+    // Render 5 seat diagrams
+    const seatsHtml = SEAT_ORDER.map(s => {
+      const strips = FACES.map(f => {
+        const key = makePos(s, f);
+        const val = snap[key] || '';
+        const filled = val ? 'filled' : '';
+        const shortVal = val ? val.slice(0, 6) : '';
+        if (f === 'left')   return `<div class="snap-strip-left ${filled}"><span class="snap-val">${shortVal}</span></div>`;
+        if (f === 'right')  return `<div class="snap-strip-right ${filled}"><span class="snap-val">${shortVal}</span></div>`;
+        if (f === 'top')    return `<div class="snap-strip-top ${filled}"><span class="snap-val">${shortVal}</span></div>`;
+        if (f === 'bottom') return `<div class="snap-strip-bottom ${filled}"><span class="snap-val">${shortVal}</span></div>`;
+      }).join('');
+      return `<div class="snap-seat">
+        <div class="snap-seat-num">#${s}</div>
+        <div class="snap-grid">
+          <div class="snap-corner tl"></div><div class="snap-corner tr"></div>
+          <div class="snap-corner bl"></div><div class="snap-corner br"></div>
+          <div class="snap-center">${s}</div>
+          ${strips}
+        </div>
+      </div>`;
+    }).join('');
+
+    resultDiv.innerHTML = `
+      <div class="snap-dir">— NORD —</div>
+      <div class="snap-table-box">${seatsHtml}</div>
+      <div class="snap-dir">— SUD —</div>`;
+  } catch(e) {
+    resultDiv.innerHTML = '<p class="snap-empty">Erreur : ' + e.message + '</p>';
+  }
+}
+
+window.loadSnapshot = loadSnapshot;
+window.selectFace = selectFace;
+window.startScan = startScan;
+window.stopScan = stopScan;
+window.toggleManual = toggleManual;
+window.saveManual = saveManual;
+window.clearActive = clearActive;
+window.deleteRecord = deleteRecord;
+
+buildTable();
+loadRecords();
+</script>
+</body>
+</html>
