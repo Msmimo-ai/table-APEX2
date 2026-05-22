@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-<title>APEX 2</title>
+<title>APEX 1</title>
 <style>
   :root {
     --bg: #ffffff;
@@ -197,7 +197,7 @@
 <div class="container">
 
   <div class="header">
-    <div class="header-badge">APEX 2</div>
+    <div class="header-badge">APEX 1</div>
     <div class="header-title">Système de scan QR</div>
   </div>
 
@@ -374,7 +374,7 @@ function setSyncStatus(text, type) {
 async function loadRecords() {
   setSyncStatus('Sync…', 'loading');
   try {
-    const url = SUPABASE_URL + '/rest/v1/APEX2?select=*&order=date.desc&limit=40';
+    const url = SUPABASE_URL + '/rest/v1/APEX1?select=*&order=date.desc&limit=40';
     const res = await fetch(url, {
       method: 'GET',
       headers: {
@@ -474,15 +474,15 @@ function toggleManual() {
 function saveManual() {
   const v = document.getElementById('manual-input').value.trim();
   if (!v || !activeKey) return;
-  saveValue(v);
+  saveValue(v, 'manual');
   document.getElementById('manual-input').value = '';
   document.getElementById('manual-row').style.display = 'none';
 }
 
-async function saveValue(val) {
+async function saveValue(val, source = 'scan') {
   const trimmed = val.trim();
   if (!/^\d+$/.test(trimmed)) {
-    setStatus('❌ Résultat inconnu du scan.', 'err');
+    setStatus(source === 'manual' ? '❌ Résultat inconnu.' : '❌ Résultat inconnu du scan.', 'err');
     return;
   }
   const num = parseInt(trimmed, 10);
@@ -490,11 +490,11 @@ async function saveValue(val) {
   const isRF = activeKey.includes('RF');
   const isOdd = num % 2 !== 0;
   if (isEF && isOdd) {
-    setStatus('❌ Le code scanné est une face de laminage.', 'err');
+    setStatus(source === 'manual' ? '❌ Le code saisi est une face de laminage.' : '❌ Le code scanné est une face de laminage.', 'err');
     return;
   }
   if (isRF && !isOdd) {
-    setStatus('❌ Le code scanné est une petite face.', 'err');
+    setStatus(source === 'manual' ? '❌ Le code saisi est une petite face.' : '❌ Le code scanné est une petite face.', 'err');
     return;
   }
   setStatus('Enregistrement en cours…', '');
@@ -502,7 +502,7 @@ async function saveValue(val) {
   const edtStr = now.toLocaleString('sv-SE', { timeZone: 'America/Toronto' });
   const row = { [COL_POSITION]: activeKey, [COL_VALUE]: trimmed, [COL_SCANNED]: edtStr };
   try {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/APEX2', {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/APEX1', {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
@@ -530,7 +530,7 @@ async function saveValue(val) {
 async function clearActive() {
   if (!activeKey) return;
   setStatus('Suppression…', '');
-  await fetch(SUPABASE_URL + '/rest/v1/APEX2?position=eq.' + encodeURIComponent(activeKey), {
+  await fetch(SUPABASE_URL + '/rest/v1/APEX1?position=eq.' + encodeURIComponent(activeKey), {
     method: 'DELETE',
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
   });
@@ -542,7 +542,7 @@ async function clearActive() {
 }
 
 async function deleteRecord(dateVal, key) {
-  await fetch(SUPABASE_URL + '/rest/v1/APEX2?position=eq.' + encodeURIComponent(key) + '&date=eq.' + encodeURIComponent(dateVal), {
+  await fetch(SUPABASE_URL + '/rest/v1/APEX1?position=eq.' + encodeURIComponent(key) + '&date=eq.' + encodeURIComponent(dateVal), {
     method: 'DELETE',
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
   });
@@ -582,7 +582,7 @@ async function loadSnapshot() {
 
   // Use native fetch to avoid DataCloneError on mobile browsers
   try {
-    const url = SUPABASE_URL + '/rest/v1/APEX2?select=*&date=lte.' + encodeURIComponent(chosenEdt) + '&order=date.desc&limit=1000';
+    const url = SUPABASE_URL + '/rest/v1/APEX1?select=*&date=lte.' + encodeURIComponent(chosenEdt) + '&order=date.desc&limit=1000';
     const res = await fetch(url, {
       method: 'GET',
       mode: 'cors',
