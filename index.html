@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-<title>APEX 1</title>
+<title>APEX 2</title>
 <style>
   :root {
     --bg: #ffffff;
@@ -197,7 +197,7 @@
 <div class="container">
 
   <div class="header">
-    <div class="header-badge">APEX 1</div>
+    <div class="header-badge">APEX 2</div>
     <div class="header-title">Système de scan QR</div>
   </div>
 
@@ -374,7 +374,7 @@ function setSyncStatus(text, type) {
 async function loadRecords() {
   setSyncStatus('Sync…', 'loading');
   try {
-    const url = SUPABASE_URL + '/rest/v1/APEX1?select=*&order=date.desc&limit=40';
+    const url = SUPABASE_URL + '/rest/v1/APEX2?select=*&order=date.desc&limit=40';
     const res = await fetch(url, {
       method: 'GET',
       headers: {
@@ -502,7 +502,7 @@ async function saveValue(val, source = 'scan') {
   const edtStr = now.toLocaleString('sv-SE', { timeZone: 'America/Toronto' });
   const row = { [COL_POSITION]: activeKey, [COL_VALUE]: trimmed, [COL_SCANNED]: edtStr };
   try {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/APEX1', {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/APEX2', {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
@@ -530,7 +530,7 @@ async function saveValue(val, source = 'scan') {
 async function clearActive() {
   if (!activeKey) return;
   setStatus('Suppression…', '');
-  await fetch(SUPABASE_URL + '/rest/v1/APEX1?position=eq.' + encodeURIComponent(activeKey), {
+  await fetch(SUPABASE_URL + '/rest/v1/APEX2?position=eq.' + encodeURIComponent(activeKey), {
     method: 'DELETE',
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
   });
@@ -542,7 +542,7 @@ async function clearActive() {
 }
 
 async function deleteRecord(dateVal, key) {
-  await fetch(SUPABASE_URL + '/rest/v1/APEX1?position=eq.' + encodeURIComponent(key) + '&date=eq.' + encodeURIComponent(dateVal), {
+  await fetch(SUPABASE_URL + '/rest/v1/APEX2?position=eq.' + encodeURIComponent(key) + '&date=eq.' + encodeURIComponent(dateVal), {
     method: 'DELETE',
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
   });
@@ -582,7 +582,7 @@ async function loadSnapshot() {
 
   // Use native fetch to avoid DataCloneError on mobile browsers
   try {
-    const url = SUPABASE_URL + '/rest/v1/APEX1?select=*&date=lte.' + encodeURIComponent(chosenEdt) + '&order=date.desc&limit=1000';
+    const url = SUPABASE_URL + '/rest/v1/APEX2?select=*&date=lte.' + encodeURIComponent(chosenEdt) + '&order=date.desc&limit=1000';
     const res = await fetch(url, {
       method: 'GET',
       mode: 'cors',
